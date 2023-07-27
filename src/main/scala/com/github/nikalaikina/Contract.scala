@@ -1,27 +1,39 @@
 package com.github.nikalaikina
 
+import io.circe.Decoder
+
 import java.time.Instant
+
+object Ids {
+  import io.circe.generic.semiauto._
+
+  opaque type Tag[+A] = String
+
+  type TradeSymbol
+  type Location
+
+  given typeClass[TC[_], A](using tc: TC[String]): TC[Tag[A]] = tc
+
+}
 
 sealed trait Contract
 
 object Contract {
-  opaque type ContractId = String
-  opaque type TradeSymbol = String
-  opaque type Location = String
+  import Ids._
 
   case class Payment(onAccepted: Long, onFulfilled: Long)
 
   case class Terms(deadline: Instant, payment: Payment, deliver: List[Deliver])
 
   case class Deliver(
-      tradeSymbol: TradeSymbol,
-      destinationSymbol: Location,
+      tradeSymbol: Tag[TradeSymbol],
+      destinationSymbol: Tag[Location],
       unitsRequired: Long,
       unitsFulfilled: Long
   )
 
   case class Procurement(
-      id: ContractId,
+      id: Tag[Contract],
       factionSymbol: String,
       terms: Terms,
       accepted: Boolean,
