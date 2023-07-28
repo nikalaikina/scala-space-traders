@@ -18,6 +18,13 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 class GameClient[F[_]: Concurrent](client: HttpClient[F]) {
   import io.circe.generic.auto.*
 
+  def waypoints(systemSymbol: String): F[List[Waypoint]] = {
+    val url = uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints"
+    client
+      .run[Resp[List[Waypoint]]](Request(uri = url))
+      .map(_.data)
+  }
+
   def getContracts: F[List[Procurement]] = {
     val url = uri"https://api.spacetraders.io/v2/my/contracts"
     client

@@ -30,7 +30,12 @@ object Main extends IOApp {
   def program[F[_]: Monad](game: GameClient[F]): F[Unit] = {
     for {
       contracts <- game.getContracts
-      _ <- game.acceptContract(contracts.head.id)
+      res <- game.waypoints("X1-B13")
+      _ = println(res)
+      _ = println(":" * 100)
+      _ = println(res.filter(_.traits.exists(_.symbol == "MARKETPLACE")))
+
+//      _ <- game.acceptContract(contracts.head.id)
     } yield ()
   }
 

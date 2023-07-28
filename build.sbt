@@ -10,5 +10,6 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.http4s" %% "http4s-circe" % "1.0.0-M38",
     libraryDependencies += "io.circe" %% "circe-generic" % "0.14.3",
     libraryDependencies += "org.slf4j" % "slf4j-api" % "2.0.7",
-    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7"
+    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.7",
+    libraryDependencies += "dev.zio" %% "zio-http" % "3.0.0-RC2",
   )
