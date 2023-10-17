@@ -1,36 +1,39 @@
 package com.github.nikalaikina
 
-import Waypoint.*
+import com.github.nikalaikina.Waypoint.*
+import io.circe.literal.json
+import io.circe._
 
 import java.time.Instant
+import io.circe.generic.auto.*
+import Ids._
 
 case class Waypoint(
-    systemSymbol: String,
-    symbol: String,
+    symbol: Tag[WaypointSymbol],
     `type`: String,
-    x: Long,
-    y: Long,
-    // orbitals ??
-    traits: List[Trait],
-    chart: Chart,
-    faction: Faction
+    systemSymbol: Tag[SystemSymbol],
+    x: Int,
+    y: Int,
+    orbitals: Seq[Orbitals],
+    orbits: Option[String],
+    faction: Option[Orbitals],
+    traits: Seq[Traits],
+    chart: Option[Chart]
 )
 
-object Waypoint {
 
-  case class Trait(
-      symbol: String,
-      name: String,
-      description: String
-  )
+case class Chart(
+    waypointSymbol: Option[Tag[WaypointSymbol]],
+    submittedBy: Option[String],
+    submittedOn: Option[String]
+)
 
-//  object Trait {
-//    enum TraitSymbol:
-//      case Marketplace, Green, Blue
-//    MARKETPLACE
-//  }
+case class Orbitals(
+    symbol: String
+)
 
-  case class Chart(submittedBy: String, submittedOn: Instant)
-  case class Faction(symbol: String)
-
-}
+case class Traits(
+    symbol: String,
+    name: String,
+    description: String
+)

@@ -8,41 +8,64 @@ import com.github.nikalaikina.GameClient.Resp
 import com.github.nikalaikina.Ids.*
 import io.circe.{Decoder, Json}
 import io.circe.syntax.*
+import io.circe._
 import org.http4s.*
 import org.http4s.client.Client
 import org.http4s.headers.Authorization
 import org.http4s.implicits.uri
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import org.http4s.circe._
+import org.http4s.circe.CirceEntityCodec._
+import Waypoint._
 
 class GameClient[F[_]: Concurrent](client: HttpClient[F]) {
   import io.circe.generic.auto.*
 
-  def waypoints(systemSymbol: String): F[List[Waypoint]] = {
-    val url = uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints"
+  def waypoints(systemSymbol: Tag[SystemSymbol]): F[List[Waypoint]] = {
+    val url =
+      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints"
     client
       .run[Resp[List[Waypoint]]](Request(uri = url))
       .map(_.data)
   }
 
-  def getContracts: F[List[Procurement]] = {
+  def contracts: F[List[Procurement]] = {
     val url = uri"https://api.spacetraders.io/v2/my/contracts"
     client
       .run[Resp[List[Procurement]]](Request(uri = url))
       .map(_.data)
   }
 
-  def acceptContract(id: Tag[Contract]): F[Unit] = {
+  def shipyard(systemSymbol: Tag[SystemSymbol], waypointSymbol: Tag[WaypointSymbol]): F[Shipyard] = {
+    val url =
+      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints" / waypointSymbol / "shipyard"
+    client
+      .run[Resp[Shipyard]](Request(uri = url))
+      .map(_.data)
+  }
+
+  def buyShip(waypointSymbol: Tag[WaypointSymbol], shipType: String): F[BoughtShip] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships"
+
+    client
+      .run[Resp[BoughtShip]](
+        Request(method = Method.POST, uri = url).withEntity(BuyShip(shipType, waypointSymbol))
+      )
+      .map(_.data)
+  }
+
+  def acceptContract(id: Tag[Contract]): F[Contract] = {
     val url = uri"https://api.spacetraders.io/v2/my/contracts" / id / "accept"
     client
-      .run[Unit](Request(method = Method.POST, uri = url))
+      .run[Contract](Request(method = Method.POST, uri = url))
   }
 
 }
 
 object GameClient {
   case class Meta(total: Int, page: Int, limit: Int)
-  case class Resp[T](data: T, meta: Meta)
+  case class Resp[T](data: T, meta: Option[Meta])
 }
 
 class HttpClient[F[_]: Async](client: Client[F], token: String) {
@@ -59,7 +82,7 @@ class HttpClient[F[_]: Async](client: Client[F], token: String) {
   private val auth = Authorization(Credentials.Token(AuthScheme.Bearer, token))
 
   def run[T: Decoder](req: Request[F]): F[T] = {
-    loggingClient.expect[T](req.withHeaders(Headers(auth)))
+    loggingClient.expect[T](req.withHeaders(req.headers.put(auth)))
   }
 
 }

@@ -9,8 +9,13 @@ object Ids {
 
   opaque type Tag[+A] = String
 
+  object Tag:
+    def apply[A](value: String): Tag[A] = value
+
   type TradeSymbol
   type Location
+  type WaypointSymbol
+  type SystemSymbol
 
   given typeClass[TC[_], A](using tc: TC[String]): TC[Tag[A]] = tc
 

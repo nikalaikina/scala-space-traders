@@ -13,6 +13,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.typelevel.log4cats.{Logger, LoggerFactory}
 
 object Main extends IOApp {
+  import Ids._
 
   private implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
@@ -27,13 +28,22 @@ object Main extends IOApp {
       .as(ExitCode.Success)
   }
 
+  val system = Ids.Tag[SystemSymbol]("X1-CS80")
+
   def program[F[_]: Monad](game: GameClient[F]): F[Unit] = {
     for {
-      contracts <- game.getContracts
-      res <- game.waypoints("X1-B13")
+      contracts <- game.contracts
+      res <- game.waypoints(system)
       _ = println(res)
+      shipyards = res.filter(_.traits.exists(_.symbol == "SHIPYARD"))
+      waypoint = shipyards.head
       _ = println(":" * 100)
-      _ = println(res.filter(_.traits.exists(_.symbol == "MARKETPLACE")))
+      _ = println(shipyards)
+
+      shipyard <- game.shipyard(system, waypoint.symbol)
+      _ = println("*" * 100)
+      _ = println(shipyard.shipTypes)
+      res <- game.buyShip(waypoint.symbol, shipyard.shipTypes.head.`type`)
 
 //      _ <- game.acceptContract(contracts.head.id)
     } yield ()
