@@ -28,24 +28,40 @@ object Main extends IOApp {
       .as(ExitCode.Success)
   }
 
-  val system = Ids.Tag[SystemSymbol]("X1-CS80")
+  val system = Ids.Tag[SystemSymbol]("X1-ZN63")
 
   def program[F[_]: Monad](game: GameClient[F]): F[Unit] = {
     for {
+      agent <- game.agent
+      res <- game.waypoint(system, agent.headquarters)
       contracts <- game.contracts
-      res <- game.waypoints(system)
-      _ = println(res)
-      shipyards = res.filter(_.traits.exists(_.symbol == "SHIPYARD"))
-      waypoint = shipyards.head
       _ = println(":" * 100)
-      _ = println(shipyards)
-
-      shipyard <- game.shipyard(system, waypoint.symbol)
-      _ = println("*" * 100)
-      _ = println(shipyard.shipTypes)
-      res <- game.buyShip(waypoint.symbol, shipyard.shipTypes.head.`type`)
-
+      _ = println(contracts)
 //      _ <- game.acceptContract(contracts.head.id)
+
+      shipyards <- game.waypoints(system, Set("SHIPYARD"))
+//      waypoint = shipyards.head
+
+      shipyard <- game.shipyard(system, shipyards.head.symbol)
+      _ = println(":" * 100)
+      _ = println(shipyard)
+      //      shipyard <- game.buyShip(shipyard.symbol, "SHIP_LIGHT_HAULER")
+//      ships <- game.myShips
+
+      _ = println("^" * 100)
+//      _ = println(ships)
+      asteroid <- game.waypoints(system, "ENGINEERED_ASTEROID")
+//      _ <- game.orbit("VERA_TEST_2-1")
+//      _ <- game.navigate("VERA_TEST_2-1", asteroid.head.symbol)
+//      _ <- game.dock("VERA_TEST_2-1")
+      _ <- game.refuel("VERA_TEST_2-1")
+            _ <- game.orbit("VERA_TEST_2-1")
+            _ <- game.extract("VERA_TEST_2-1")
+//      _ = println(asteroid)
+      //      _ = println("*" * 100)
+      //      _ = println(shipyard.shipTypes)
+      //      res <- game.buyShip(waypoint.symbol, shipyard.shipTypes.head.`type`)
+
     } yield ()
   }
 

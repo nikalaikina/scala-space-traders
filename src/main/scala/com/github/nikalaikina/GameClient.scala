@@ -3,41 +3,71 @@ package com.github.nikalaikina
 import cats.effect.kernel.Async
 import cats.effect.{Concurrent, IO}
 import cats.implicits.*
-import com.github.nikalaikina.Contract.{Payment, Procurement}
+import com.github.nikalaikina.Contract.Payment
 import com.github.nikalaikina.GameClient.Resp
 import com.github.nikalaikina.Ids.*
-import io.circe.{Decoder, Json}
+import com.github.nikalaikina.Waypoint.*
 import io.circe.syntax.*
-import io.circe._
+import io.circe.*
 import org.http4s.*
+import org.http4s.circe.*
+import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.client.Client
 import org.http4s.headers.Authorization
 import org.http4s.implicits.uri
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.http4s.circe._
-import org.http4s.circe.CirceEntityCodec._
-import Waypoint._
 
 class GameClient[F[_]: Concurrent](client: HttpClient[F]) {
   import io.circe.generic.auto.*
 
-  def waypoints(systemSymbol: Tag[SystemSymbol]): F[List[Waypoint]] = {
+  def agent: F[Agent] = {
     val url =
-      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints"
+      uri"https://api.spacetraders.io/v2/my/agent"
+    client
+      .run[Resp[Agent]](Request(uri = url))
+      .map(_.data)
+  }
+
+  def waypoint(
+      systemSymbol: Tag[SystemSymbol],
+      waypoint: String
+  ): F[Waypoint] = {
+    val url =
+      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints" / waypoint
+    client
+      .run[Resp[Waypoint]](Request(uri = url))
+      .map(_.data)
+  }
+
+  def waypoints(systemSymbol: Tag[SystemSymbol], traits: Set[String]): F[List[Waypoint]] = {
+    val url =
+      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints" ++? ("traits" -> traits.toSeq)
     client
       .run[Resp[List[Waypoint]]](Request(uri = url))
       .map(_.data)
   }
 
-  def contracts: F[List[Procurement]] = {
-    val url = uri"https://api.spacetraders.io/v2/my/contracts"
+
+  def waypoints(systemSymbol: Tag[SystemSymbol], `type`: String): F[List[Waypoint]] = {
+    val url =
+      uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints" +? ("type" -> `type`)
     client
-      .run[Resp[List[Procurement]]](Request(uri = url))
+      .run[Resp[List[Waypoint]]](Request(uri = url))
       .map(_.data)
   }
 
-  def shipyard(systemSymbol: Tag[SystemSymbol], waypointSymbol: Tag[WaypointSymbol]): F[Shipyard] = {
+  def contracts: F[List[Contract]] = {
+    val url = uri"https://api.spacetraders.io/v2/my/contracts"
+    client
+      .run[Resp[List[Contract]]](Request(uri = url))
+      .map(_.data)
+  }
+
+  def shipyard(
+      systemSymbol: Tag[SystemSymbol],
+      waypointSymbol: Tag[WaypointSymbol]
+  ): F[Shipyard] = {
     val url =
       uri"https://api.spacetraders.io/v2/systems" / systemSymbol / "waypoints" / waypointSymbol / "shipyard"
     client
@@ -45,14 +75,89 @@ class GameClient[F[_]: Concurrent](client: HttpClient[F]) {
       .map(_.data)
   }
 
-  def buyShip(waypointSymbol: Tag[WaypointSymbol], shipType: String): F[BoughtShip] = {
+  def buyShip(
+      waypointSymbol: Tag[WaypointSymbol],
+      shipType: String
+  ): F[BoughtShip] = {
     val url = uri"https://api.spacetraders.io/v2/my/ships"
 
     client
       .run[Resp[BoughtShip]](
-        Request(method = Method.POST, uri = url).withEntity(BuyShip(shipType, waypointSymbol))
+        Request(method = Method.POST, uri = url)
+          .withEntity(BuyShip(shipType, waypointSymbol))
       )
       .map(_.data)
+  }
+
+  def myShips: F[List[Ship]] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships"
+
+    client
+      .run[Resp[List[Ship]]](
+        Request(method = Method.GET, uri = url)
+      )
+      .map(_.data)
+  }
+
+  def orbit(
+      ship: String,
+  ): F[NavigationResult] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships" / ship / "orbit"
+
+    client
+      .run[Resp[NavigationResult]](
+        Request(method = Method.POST, uri = url)
+      )
+      .map(_.data)
+  }
+
+  def extract(
+      ship: String,
+  ): F[NavigationResult] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships" / ship / "extract"
+
+    client
+      .run[Resp[NavigationResult]](
+        Request(method = Method.POST, uri = url)
+      )
+      .map(_.data)
+  }
+
+  def dock(
+      ship: String,
+  ): F[NavigationResult] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships" / ship / "dock"
+
+    client
+      .run[Resp[NavigationResult]](
+        Request(method = Method.POST, uri = url)
+      )
+      .map(_.data)
+  }
+
+  def refuel(
+      ship: String,
+  ): F[BoughtFuel] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships" / ship / "refuel"
+
+    client
+      .run[Resp[BoughtFuel]](
+        Request(method = Method.POST, uri = url)
+      )
+      .map(_.data)
+  }
+
+  def navigate(
+      ship: String,
+      waypointSymbol: Tag[WaypointSymbol]
+  ): F[NavigationResult] = {
+    val url = uri"https://api.spacetraders.io/v2/my/ships" / ship / "navigate"
+
+    client
+      .run[Resp[NavigationResult]](
+        Request(method = Method.POST, uri = url)
+          .withEntity(WaypointPayload(waypointSymbol))
+      ).map(_.data)
   }
 
   def acceptContract(id: Tag[Contract]): F[Contract] = {

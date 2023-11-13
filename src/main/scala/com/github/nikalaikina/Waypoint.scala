@@ -21,7 +21,6 @@ case class Waypoint(
     chart: Option[Chart]
 )
 
-
 case class Chart(
     waypointSymbol: Option[Tag[WaypointSymbol]],
     submittedBy: Option[String],

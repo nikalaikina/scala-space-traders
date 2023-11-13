@@ -1,5 +1,7 @@
 package com.github.nikalaikina
 
+import com.github.nikalaikina.Contract.Terms
+import com.github.nikalaikina.Ids.Tag
 import io.circe.Decoder
 
 import java.time.Instant
@@ -21,7 +23,16 @@ object Ids {
 
 }
 
-sealed trait Contract
+case class Contract(
+    id: Tag[Contract],
+    factionSymbol: String,
+    `type`: String,
+    terms: Terms,
+    accepted: Boolean,
+    fulfilled: Boolean,
+    expiration: String,
+    deadlineToAccept: String
+)
 
 object Contract {
   import Ids._
@@ -37,14 +48,14 @@ object Contract {
       unitsFulfilled: Long
   )
 
-  case class Procurement(
-      id: Tag[Contract],
-      factionSymbol: String,
-      terms: Terms,
-      accepted: Boolean,
-      fulfilled: Boolean,
-      expiration: Instant,
-      deadlineToAccept: Instant
-  ) extends Contract
+//  case class Procurement(
+//      id: Tag[Contract],
+//      factionSymbol: String,
+//      terms: Terms,
+//      accepted: Boolean,
+//      fulfilled: Boolean,
+//      expiration: Instant,
+//      deadlineToAccept: Instant
+//  ) extends Contract
 
 }

@@ -3,7 +3,7 @@ package com.github.nikalaikina
 import com.github.nikalaikina.Ids._
 
 case class Shipyard(
-    symbol: String,
+    symbol: Tag[WaypointSymbol],
     shipTypes: Seq[ShipTypes],
     transactions: Seq[Transaction],
     ships: Seq[Ship],
@@ -13,8 +13,8 @@ case class Shipyard(
 case class Transaction(
     waypointSymbol: Tag[WaypointSymbol],
     shipSymbol: String,
-    price: Int,
-    agentSymbol: String,
+    price: Option[Int],
+    agentSymbol: Option[String],
     timestamp: String
 )
 
@@ -130,6 +130,17 @@ case class Nav(
     flightMode: String
 )
 
+
+case class NavigationResult(
+                             nav: Nav
+                           )
+
+case class BoughtFuel (
+                           agent: Agent,
+                           fuel: Fuel,
+                           transaction: Transaction
+                         )
+
 case class Reactor(
     symbol: String,
     name: String,
@@ -167,6 +178,45 @@ case class BoughtShip(
     transaction: Transaction
 )
 
+object Test extends App {
+  import io.circe.literal.json
+
+  val js = json"""
+          {
+              "agent" : {
+                "accountId" : "clok5em7e07vxs60cdj2sw0nk",
+                "symbol" : "VERA_TEST_2",
+                "headquarters" : "X1-ZN63-A1",
+                "credits" : 102685,
+                "startingFaction" : "COSMIC",
+                "shipCount" : 2
+              },
+              "fuel" : {
+                "current" : 400,
+                "capacity" : 400,
+                "consumed" : {
+                  "amount" : 16,
+                  "timestamp" : "2023-11-04T15:56:42.804Z"
+                }
+              },
+              "transaction" : {
+                "waypointSymbol" : "X1-ZN63-BB4A",
+                "shipSymbol" : "VERA_TEST_2-1",
+                "tradeSymbol" : "FUEL",
+                "type" : "PURCHASE",
+                "units" : 0,
+                "pricePerUnit" : 69,
+                "totalPrice" : 0,
+                "timestamp" : "2023-11-04T16:01:08.458Z"
+              }
+            }
+          """
+
+  import io.circe.generic.auto.*
+
+  println(js.as[BoughtFuel])
+}
+
 case class Agent(
     accountId: String,
     symbol: String,
@@ -178,5 +228,9 @@ case class Agent(
 
 case class BuyShip(
     shipType: String,
+    waypointSymbol: Tag[WaypointSymbol]
+)
+
+case class WaypointPayload(
     waypointSymbol: Tag[WaypointSymbol]
 )
